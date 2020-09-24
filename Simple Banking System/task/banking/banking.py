@@ -6,10 +6,20 @@ accounts = []
 iin = "400000"
 
 
+def get_checksum(orig_number):
+    int_number = [int(number) for number in orig_number]
+    mul_number = [n * 2 if i % 2 == 0 else n for i, n in enumerate(int_number)]
+    print(mul_number)
+    sub_number = [n - 9 if n > 9 else n for i, n in enumerate(mul_number)]
+    total = sum(sub_number)
+    return str(((total + 9) // 10 * 10) - total)
+
+
 def check_account(card_number, pin_number):
-    for account in accounts:
-        if account[0] == card_number and account[1] == pin_number:
-            return True
+    if get_checksum(card_number[:-1]) == card_number[-1]:
+        for account in accounts:
+            if account[0] == card_number and account[1] == pin_number:
+                return True
     return False
 
 
@@ -20,10 +30,17 @@ def check_card_number(card_number):
     return False
 
 
-def create_account():
-    card_number = iin + f'{random.randint(0, 9999999999):010}'
+def create_card_number():
+    orig_number = iin + f'{random.randint(0, 999999999):09}'
+    card_number = orig_number + get_checksum(orig_number)
     while check_card_number(card_number):
-        card_number = f'{random.randint(0, 9999999999):010}'
+        orig_number = iin + f'{random.randint(0, 999999999):09}'
+        card_number = orig_number + get_checksum(orig_number)
+    return card_number
+
+
+def create_account():
+    card_number = create_card_number()
     pin_number = f'{random.randint(0, 9999):04}'
     accounts.append([card_number, pin_number, 0])
     print("Your card has been created")
