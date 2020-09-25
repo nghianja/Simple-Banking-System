@@ -1,8 +1,10 @@
 # Write your code here
 import random
+import sqlite3
 
 
-accounts = []
+conn = sqlite3.connect('card.s3db')
+cur = conn.cursor()
 iin = "400000"
 
 
@@ -17,16 +19,18 @@ def get_checksum(orig_number):
 
 def check_account(card_number, pin_number):
     if get_checksum(card_number[:-1]) == card_number[-1]:
-        for account in accounts:
-            if account[0] == card_number and account[1] == pin_number:
-                return True
+        cur.execute("SELECT * FROM card WHERE number=? AND pin=?", (card_number, pin_number))
+        rows = cur.fetchall()
+        if rows:
+            return True
     return False
 
 
 def check_card_number(card_number):
-    for account in accounts:
-        if account[0] == card_number:
-            return True
+    cur.execute("SELECT * FROM card WHERE number=?", (card_number,))
+    rows = cur.fetchall()
+    if rows:
+        return True
     return False
 
 
@@ -42,7 +46,8 @@ def create_card_number():
 def create_account():
     card_number = create_card_number()
     pin_number = f'{random.randint(0, 9999):04}'
-    accounts.append([card_number, pin_number, 0])
+    cur.execute("INSERT INTO card(number, pin) VALUES (?, ?)", (card_number, pin_number))
+    conn.commit()
     print("Your card has been created")
     print("Your card number:")
     print(card_number)
@@ -52,9 +57,9 @@ def create_account():
 
 
 def print_balance(card_number):
-    for account in accounts:
-        if account[0] == card_number:
-            print("Balance: " + account[2])
+    cur.execute("SELECT * FROM card WHERE number=?", (card_number,))
+    row = cur.fetchone()
+    print("Balance: " + row[2])
 
 
 def login_account():
@@ -100,3 +105,4 @@ if __name__ == "__main__":
             if login_account() is False:
                 break
     print("Bye!")
+    conn.close()
